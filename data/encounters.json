@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "encounters": [
+    {
+      "id": "ember_wolf_dusk",
+      "monster": "ember_wolf",
+      "name": "Ember Wolf",
+      "element": "fire",
+      "rarity": "rare",
+      "hp": 12,
+      "timeWindow": { "start": 17, "end": 20 },
+      "deck": [
+        "cinderpup", "ashmoth", "magma_hound", "flare", "flare",
+        "cinderpup", "ashmoth", "magma_hound", "flare", "ashmoth", "cinderpup", "flare"
+      ],
+      "behavior": "play_highest_cost_affordable_then_attack"
+    }
+  ]
+}

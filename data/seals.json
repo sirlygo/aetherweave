@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "seals": [
+    { "id": "plain", "name": "Plain Seal", "tier": "plain", "baseRate": 0.08, "element": null, "window": null, "price": 40 },
+    { "id": "ember", "name": "Ember Seal", "tier": "attuned", "baseRate": 0.12, "element": "fire", "window": null, "price": 120 },
+    { "id": "tide", "name": "Tide Seal", "tier": "attuned", "baseRate": 0.12, "element": "water", "window": null, "price": 120 },
+    { "id": "gale", "name": "Gale Seal", "tier": "attuned", "baseRate": 0.12, "element": "storm", "window": null, "price": 120 },
+    { "id": "grove", "name": "Grove Seal", "tier": "attuned", "baseRate": 0.12, "element": "nature", "window": null, "price": 120 },
+    { "id": "dawn", "name": "Dawn Seal", "tier": "timed", "baseRate": 0.15, "element": null, "window": { "start": 5, "end": 8 }, "price": 250 },
+    { "id": "dusk", "name": "Dusk Seal", "tier": "timed", "baseRate": 0.15, "element": null, "window": { "start": 17, "end": 20 }, "price": 250 },
+    { "id": "midnight", "name": "Midnight Seal", "tier": "timed", "baseRate": 0.15, "element": null, "window": { "start": 22, "end": 2 }, "price": 250 },
+    { "id": "resonant", "name": "Resonant Seal", "tier": "conflux", "baseRate": 0.30, "element": null, "window": null, "price": null },
+    { "id": "astral", "name": "Astral Seal", "tier": "mythic", "baseRate": 0.50, "element": null, "window": null, "price": null }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "elementCycle": { "fire": "nature", "nature": "storm", "storm": "water", "water": "fire" },
+  "keywords": {
+    "swift": "Can attack the turn it enters.",
+    "shield": "Ignores the first damage it would take.",
+    "pierce": "Excess damage to a creature hits the player.",
+    "burn": "End of your turn: 1 damage to the enemy creature in this lane.",
+    "regen": "Heals 1 at the start of your turn.",
+    "thorns": "Deals 1 damage to any creature that attacks it.",
+    "last_spark": "When sealed, deals 1 damage to a random enemy creature."
+  },
+  "cards": [
+    { "id": "cinderpup", "name": "Cinderpup", "type": "creature", "element": "fire", "cost": 1, "atk": 2, "hp": 1, "rarity": "common", "keywords": ["swift"] },
+    { "id": "ashmoth", "name": "Ashmoth", "type": "creature", "element": "fire", "cost": 2, "atk": 2, "hp": 2, "rarity": "common", "keywords": ["burn"] },
+    { "id": "magma_hound", "name": "Magma Hound", "type": "creature", "element": "fire", "cost": 3, "atk": 4, "hp": 3, "rarity": "rare", "keywords": ["pierce"] },
+    { "id": "tidelet", "name": "Tidelet", "type": "creature", "element": "water", "cost": 1, "atk": 1, "hp": 3, "rarity": "common", "keywords": ["regen"] },
+    { "id": "coral_sentinel", "name": "Coral Sentinel", "type": "creature", "element": "water", "cost": 3, "atk": 2, "hp": 5, "rarity": "rare", "keywords": ["shield"] },
+    { "id": "gale_hawk", "name": "Gale Hawk", "type": "creature", "element": "storm", "cost": 2, "atk": 3, "hp": 1, "rarity": "common", "keywords": ["swift"] },
+    { "id": "ember_wolf", "name": "Ember Wolf", "type": "creature", "element": "fire", "cost": 3, "atk": 3, "hp": 3, "rarity": "rare", "keywords": ["swift"], "wildOnly": true },
+    { "id": "flare", "name": "Flare", "type": "action", "element": "fire", "cost": 1, "rarity": "common", "effect": { "kind": "damage_creature", "amount": 2 } },
+    { "id": "ripple", "name": "Ripple", "type": "action", "element": "water", "cost": 1, "rarity": "common", "effect": { "kind": "heal_creature", "amount": 3 } },
+    { "id": "gust", "name": "Gust", "type": "action", "element": "storm", "cost": 1, "rarity": "common", "effect": { "kind": "swap_lanes" } }
+  ],
+  "starterDeck": [
+    "cinderpup", "cinderpup", "ashmoth", "magma_hound", "tidelet", "coral_sentinel",
+    "gale_hawk", "flare", "ripple", "gust"
+  ]
+}
