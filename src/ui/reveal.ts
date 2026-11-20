@@ -10,7 +10,7 @@ const LABEL: Record<Rarity, string> = { common: "Common", rare: "Rare", epic: "E
 
 export function playReveal(host: HTMLElement, name: string, icon: string, rarity: Rarity, onDone: () => void) {
   const t = TIERS[rarity];
-  host.innerHTML = `<div class="over rv"><canvas></canvas><div class="center rvc"><div class="seal">◈</div><div class="rvn" style="opacity:0"><div class="big">${icon} ${name}</div><div class="sub">${LABEL[rarity]} captured</div></div></div></div>`;
+  host.innerHTML = `<div class="over rv"><canvas></canvas><div class="center rvc"><div class="seal">◈</div><div class="rvn" style="opacity:0"><div style="display:flex;justify-content:center">${icon}</div><div class="big">${name}</div><div class="sub">${LABEL[rarity]} captured</div></div></div></div>`;
   const cv = host.querySelector("canvas")!, ctx = cv.getContext("2d")!;
   const W = (cv.width = host.clientWidth || 390), H = (cv.height = host.clientHeight || 780);
   const seal = host.querySelector<HTMLElement>(".seal")!, nm = host.querySelector<HTMLElement>(".rvn")!;

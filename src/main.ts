@@ -6,6 +6,7 @@ import encJson from "../data/encounters.json";
 import { newDuel, apply, throwSeal, aiTurn, type GameData, type DuelState, type CardDef, type Creature } from "./engine/battle.ts";
 import { load, store, type Save } from "./save.ts";
 import { renderDeck } from "./ui/deck.ts";
+import { monsterSvg, rivalSvg, ashlandsScene } from "./ui/art.ts";
 import { playReveal } from "./ui/reveal.ts";
 import { captureChance, type Seal, type CaptureConfig, type Rarity } from "./engine/capture.ts";
 
@@ -54,7 +55,7 @@ const chanceFor = (s: Seal) => captureChance({
 function laneHtml(c: Creature | null, side: "player" | "enemy", i: number): string {
   const hot = side === "player" ? needLane(i) : needEnemy(i);
   const inner = c
-    ? `<div class="card el-${c.element} ${c.sick ? "sick" : ""} ${c.shieldUp ? "shield" : ""}"><div class="nm">${ICON[c.element]} ${c.name}</div><div class="kw">${c.keywords.join(" · ")}</div><div class="st"><span>⚔${c.atk}</span><span>♥${c.hp}</span></div></div>`
+    ? `<div class="card el-${c.element} ${c.sick ? "sick" : ""} ${c.shieldUp ? "shield" : ""}"><div class="nm">${c.name}</div><div class="art">${monsterSvg(c.cardId, c.element)}</div><div class="kw">${c.keywords.join(" · ")}</div><div class="st"><span>⚔${c.atk}</span><span>♥${c.hp}</span></div></div>`
     : "";
   return `<div class="lane ${hot ? "hot" : ""}" data-side="${side}" data-lane="${i}">${inner}</div>`;
 }
@@ -71,11 +72,11 @@ function needEnemy(i: number) {
 }
 
 function render() {
-  if (result === "captured") { if (!revealing) { revealing = true; playReveal(el$, enc.name, ICON[enc.element], enc.rarity as Rarity, () => { revealing = false; result = "won"; resultCaptured = true; render(); }); } return; }
+  if (result === "captured") { if (!revealing) { revealing = true; playReveal(el$, enc.name, monsterSvg(enc.monster!, enc.element, enc.rarity, 120), enc.rarity as Rarity, () => { revealing = false; result = "won"; resultCaptured = true; render(); }); } return; }
   const p = duel.sides.player, e = duel.sides.enemy;
   const myTurn = duel.active === "player" && !duel.winner && !busy;
   el$.innerHTML = `
-    <div class="bar"><span>${ICON[enc.element]} ${enc.name}${tutorial ? " (tutorial)" : ""}</span><span class="hp">♥ ${Math.max(0, e.hp)}/${enc.hp}</span></div>
+    ${ashlandsScene(save.hour, `<div class="plate"><div>${enc.name}${tutorial ? " · tutorial" : ""} <span class="hp" style="float:right;margin-left:12px">${Math.max(0, e.hp)}/${enc.hp}</span></div><div class="hpb"><b style="width:${Math.max(0, e.hp) / enc.hp * 100}%;${e.hp / enc.hp < 0.35 ? "background:#ff6a5a" : ""}"></b></div></div><div class="foe">${enc.monster ? monsterSvg(enc.monster, enc.element, enc.rarity, 110) : rivalSvg(110)}</div>`, "battle")}
     <div class="board">
       <div class="row">${e.lanes.map((c, i) => laneHtml(c, "enemy", i)).join("")}</div>
       <div class="div"></div>
@@ -86,7 +87,7 @@ function render() {
     <div class="hand">${p.hand.map((id, i) => {
       const d = cardOf(id);
       const stat = d.type === "creature" ? `<span>⚔${d.atk}</span><span>♥${d.hp}</span>` : `<span>${d.name}</span>`;
-      return `<div class="card el-${d.element} ${sel === i ? "sel" : ""} ${d.cost > p.energy || !myTurn ? "no" : ""}" data-hand="${i}"><span class="cost">${d.cost}</span><div class="nm">${ICON[d.element]} ${d.type === "creature" ? d.name : "Spell"}</div><div class="kw">${(d.keywords || []).join(" · ") || (d.type === "action" ? d.effect?.kind.replace("_", " ") : "")}</div><div class="st">${stat}</div></div>`;
+      return `<div class="card el-${d.element} ${sel === i ? "sel" : ""} ${d.cost > p.energy || !myTurn ? "no" : ""}" data-hand="${i}"><span class="cost">${d.cost}</span><div class="nm">${d.type === "creature" ? d.name : ICON[d.element] + " Spell"}</div>${d.type === "creature" ? `<div class="art">${monsterSvg(d.id, d.element)}</div>` : ""}<div class="kw">${(d.keywords || []).join(" · ") || (d.type === "action" ? d.effect?.kind.replace("_", " ") : "")}</div><div class="st">${stat}</div></div>`;
     }).join("")}</div>
     <div class="btns"><button class="alt" id="bag" ${myTurn && !tutorial ? "" : "disabled"}>🎒 Items</button><button id="end" ${myTurn ? "" : "disabled"}>End turn</button></div>
     ${showBag ? bagHtml() : ""}${result ? resultHtml() : ""}`;
@@ -199,14 +200,17 @@ function title() {
   document.getElementById("go")!.onclick = () => (fresh ? story(INTRO, () => startDuel(ALL.find((e) => e.id === "kade_tutorial")!, true)) : map());
 }
 
+const SPOTS = [[22, 62], [70, 58], [44, 78], [84, 82], [14, 88], [58, 50], [34, 48]];
 function map() {
   result = null; revealing = false; tutorial = false;
   const here = ALL.filter((e) => e.monster && inWin(e.timeWindow, save.hour));
   const ready = save.deck.length >= 8;
+  const sprites = here.map((e, i) => { const [x, y] = SPOTS[i % SPOTS.length]; return `<button class="spot" data-enc="${e.id}" ${ready ? "" : "disabled"} style="left:${x}%;top:${y}%;z-index:${y}">${monsterSvg(e.monster!, e.element, e.rarity, 78)}<span>${e.name}${e.rarity !== "common" ? " ★" : ""}</span></button>`; }).join("");
   el$.innerHTML = `<div class="bar"><span>Ashlands</span><span class="en">${PHASE(save.hour)} ${hourLabel(save.hour)}</span><span>◈ ${save.credits}</span></div>
+    <div class="world">${ashlandsScene(save.hour, sprites, "")}</div>
     <div class="sub" style="text-align:center">${ready ? "Tap a monster to challenge it" : "Your deck needs 8+ cards"}</div>
-    <div class="items" style="display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:8px">${here.map((e) => `<button class="item mon" data-enc="${e.id}" ${ready ? "" : "disabled"} style="flex-direction:column;align-items:flex-start;gap:4px"><span style="font-size:30px">${ICON[e.element]}</span><b>${e.name}</b><small>${e.rarity} · ♥${e.hp}${e.timeWindow ? " · " + e.timeWindow.start + "–" + e.timeWindow.end + "h" : ""}</small></button>`).join("")}</div>
     <div class="btns"><button class="alt" id="coll">🃏 Deck</button>${save.stage === "pact" ? '<button class="alt" id="outpost">🏕 Outpost</button><button class="alt" id="exch">♻ Exchange</button>' : ""}</div>`;
+  el$.querySelector<HTMLElement>(".world .scene")!.style.height = "100%";
   el$.querySelectorAll<HTMLElement>("[data-enc]").forEach((n) => n.onclick = () => startDuel(ALL.find((e) => e.id === n.dataset.enc)!));
   document.getElementById("coll")!.onclick = () => renderDeck(el$, data.cards, save, map, () => store(save));
   document.getElementById("outpost")?.addEventListener("click", outpost);

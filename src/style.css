@@ -4,9 +4,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:15px/1
 #app{height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom)}
 .bar{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;font-weight:600}
 .hp{color:#ff8a8a}.en{color:var(--storm)}
-.board{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:0}
+.board{flex:1;padding-top:4px;display:flex;flex-direction:column;justify-content:center;gap:6px;min-height:0}
 .row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.lane{aspect-ratio:3/4;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;background:#18162600}
+.lane{aspect-ratio:1/1.05;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;background:#18162600}
 .lane.hot{border-color:var(--acc);background:#9b7bff18}
 .div{height:1px;background:var(--line);margin:2px 0}
 .card{border-radius:10px;border:2px solid var(--line);background:var(--panel);padding:4px;display:flex;flex-direction:column;justify-content:space-between;width:100%;height:100%;font-size:12px;position:relative;user-select:none}
@@ -39,3 +39,28 @@ button:disabled{opacity:.4}
 button.mini{flex:none;padding:6px 12px;font-size:18px;border-radius:8px}
 .home{margin:auto;width:100%;display:flex;flex-direction:column;gap:12px;text-align:center}
 .home h1{font-size:34px;margin:0 0 12px}
+/* scenes */
+.scene{position:relative;overflow:hidden;border-radius:14px;--sky1:#3a2748;--sky2:#c25a3a;--ridge3:#2a1a2e;--ridge2:#1c1220;--ridge1:#120c16;background:linear-gradient(var(--sky1),var(--sky2))}
+.scene.morning{--sky1:#6fa8e0;--sky2:#ffc89a;--ridge3:#5b3a3a;--ridge2:#3a2428;--ridge1:#241618}
+.scene.day{--sky1:#5aa0e8;--sky2:#b9dcff;--ridge3:#6b4a44;--ridge2:#4a2f30;--ridge1:#2e1c1e}
+.scene.dusk{--sky1:#3b2a5a;--sky2:#ff7a45}
+.scene.night{--sky1:#07061a;--sky2:#2a1f4a;--ridge3:#1c1428;--ridge2:#130d1c;--ridge1:#0b0711}
+.scene .sky{position:absolute;inset:0;width:100%;height:100%}
+.embers{position:absolute;inset:0;pointer-events:none}
+.embers i{position:absolute;bottom:-6px;width:4px;height:4px;border-radius:50%;background:#ffb35a;box-shadow:0 0 6px #ff7a45;opacity:0;animation:rise 6s linear infinite}
+@keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.9}100%{transform:translateY(-260px) translateX(24px);opacity:0}}
+.mon{display:block;overflow:visible;filter:drop-shadow(0 2px 0 #0004)}
+.mon.r-rare{filter:drop-shadow(0 0 6px #7fd0ff)}.mon.r-epic{filter:drop-shadow(0 0 8px #ff9bd5)}.mon.r-boss{filter:drop-shadow(0 0 10px #ffd86b)}
+.world{flex:1;min-height:0;margin:4px 0}
+.world .spot{position:absolute;transform:translate(-50%,-100%);background:none;border:0;padding:0;color:#fff;display:flex;flex-direction:column;align-items:center;gap:0;flex:none;border-radius:0;animation:bob 2.6s ease-in-out infinite}
+.world .spot span{font:700 11px system-ui;background:#000a;border-radius:8px;padding:2px 7px;margin-top:-4px;white-space:nowrap}
+.world .spot:disabled{opacity:.6}
+@keyframes bob{50%{transform:translate(-50%,calc(-100% - 5px))}}
+.battle{height:34%;flex:none;margin-top:4px}
+.battle .foe{position:absolute;right:8%;bottom:6%;animation:bob2 2.2s ease-in-out infinite}
+.battle .foe::after{content:"";position:absolute;left:50%;bottom:-2px;width:130%;height:16px;transform:translateX(-50%);background:radial-gradient(#0008,#0000 70%);z-index:-1}
+@keyframes bob2{50%{transform:translateY(-4px)}}
+.plate{position:absolute;left:8px;top:8px;background:#000b;border:1px solid #fff3;border-radius:10px;padding:6px 10px;min-width:150px;font-weight:700;z-index:2}
+.plate .hpb{height:7px;border-radius:5px;background:#fff2;margin-top:4px;overflow:hidden}.plate .hpb b{display:block;height:100%;background:#5fd07a;transition:width .4s}
+.card .art{display:flex;justify-content:center;margin:-2px 0 -4px}
+.hand .card .art svg{width:40px;height:40px}.lane .card .art svg{width:52px;height:52px}
