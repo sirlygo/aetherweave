@@ -7,7 +7,7 @@
    "name": "Cinderpup",
    "element": "fire",
    "rarity": "common",
-   "hp": 8,
+   "hp": 12,
    "deck": [
     "cinderpup",
     "cinderpup",
@@ -29,7 +29,7 @@
    "name": "Ashmoth",
    "element": "fire",
    "rarity": "common",
-   "hp": 9,
+   "hp": 13,
    "deck": [
     "ashmoth",
     "ashmoth",
@@ -51,7 +51,7 @@
    "name": "Magma Hound",
    "element": "fire",
    "rarity": "rare",
-   "hp": 12,
+   "hp": 24,
    "deck": [
     "magma_hound",
     "magma_hound",
@@ -77,7 +77,7 @@
    "name": "Ember Wolf",
    "element": "fire",
    "rarity": "rare",
-   "hp": 12,
+   "hp": 22,
    "deck": [
     "ember_wolf",
     "ember_wolf",
@@ -103,7 +103,7 @@
    "name": "Tidelet",
    "element": "water",
    "rarity": "common",
-   "hp": 8,
+   "hp": 19,
    "deck": [
     "tidelet",
     "tidelet",
@@ -125,7 +125,7 @@
    "name": "Coral Sentinel",
    "element": "water",
    "rarity": "rare",
-   "hp": 12,
+   "hp": 20,
    "deck": [
     "coral_sentinel",
     "coral_sentinel",
@@ -147,7 +147,7 @@
    "name": "Gale Hawk",
    "element": "storm",
    "rarity": "common",
-   "hp": 9,
+   "hp": 10,
    "deck": [
     "gale_hawk",
     "gale_hawk",
@@ -173,7 +173,7 @@
    "name": "Rival Kade",
    "element": "fire",
    "rarity": "common",
-   "hp": 10,
+   "hp": 8,
    "deck": [
     "cinderpup",
     "ashmoth",
