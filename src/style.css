@@ -16,8 +16,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:15px/1
 .card .cost{position:absolute;top:-8px;left:-8px;background:var(--acc);color:#000;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-weight:800;font-size:12px}
 .card.sick{opacity:.65}.card.sel{outline:3px solid var(--acc)}.card.shield::after{content:"🛡";position:absolute;right:2px;top:2px;font-size:12px}
 .el-fire{border-color:var(--fire)}.el-water{border-color:var(--water)}.el-storm{border-color:var(--storm)}.el-nature{border-color:var(--nature)}
-.hand{display:flex;gap:6px;overflow-x:auto;padding:12px 4px 6px;min-height:118px}
-.hand .card{width:74px;height:100px;flex:none}
+.hand{display:flex;gap:6px;overflow-x:auto;padding:12px 4px 6px;min-height:136px}
+.hand .card{width:76px;height:118px;flex:none}
 .hand .card.no{opacity:.4}
 .btns{display:flex;gap:8px;padding:6px 0 10px}
 button{flex:1;border:0;border-radius:12px;padding:14px;font:700 15px system-ui;color:#000;background:var(--acc)}
@@ -64,3 +64,5 @@ button.mini{flex:none;padding:6px 12px;font-size:18px;border-radius:8px}
 .plate .hpb{height:7px;border-radius:5px;background:#fff2;margin-top:4px;overflow:hidden}.plate .hpb b{display:block;height:100%;background:#5fd07a;transition:width .4s}
 .card .art{display:flex;justify-content:center;margin:-2px 0 -4px}
 .hand .card .art svg{width:40px;height:40px}.lane .card .art svg{width:52px;height:52px}
+.card.ready{box-shadow:0 0 0 2px #ffd86b,0 0 10px #ffd86b88}.card.burn::before{content:"🔥";position:absolute;left:2px;top:2px;font-size:12px}
+.foe.hotfoe{cursor:pointer;filter:drop-shadow(0 0 10px #ffd86b)}.tip{position:absolute;right:8px;top:8px;background:#000b;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;color:#ffd86b}

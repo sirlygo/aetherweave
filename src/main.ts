@@ -42,7 +42,7 @@ let resultCaptured = false;
 function startDuel(e: Enc, isTutorial = false) {
   enc = e; tutorial = isTutorial; settled = false;
   duel = newDuel(data, isTutorial ? cardsJson.starterDeck : save.deck, e.deck, { enemyHp: e.hp, seed: (Date.now() & 0xffff) || 1 });
-  sel = null; swapFirst = null; showBag = false; busy = false; msg = isTutorial ? "Tutorial: play cards, then End turn. Reduce Kade to 0 HP." : ""; result = null; revealing = false; resultCaptured = false;
+  sel = null; swapFirst = null; showBag = false; busy = false; atk = null; msg = isTutorial ? "Summon a monster, tap it to attack, then End turn." : ""; result = null; revealing = false; resultCaptured = false;
   render();
 }
 
@@ -52,59 +52,68 @@ const chanceFor = (s: Seal) => captureChance({
   failedThrows: duel.failedThrows, elementCycle: data.elementCycle,
 }, cfg);
 
-function laneHtml(c: Creature | null, side: "player" | "enemy", i: number): string {
-  const hot = side === "player" ? needLane(i) : needEnemy(i);
+const SLOTS = 3;
+let atk: number | null = null; // selected attacking monster (own field index)
+const needsTribute = (d: CardDef) => d.type === "creature" && d.cost >= 3;
+function selDef(): CardDef | null { return sel === null ? null : cardOf(duel.sides.player.hand[sel]); }
+const foeEmpty = () => duel.sides.enemy.field.every((c) => !c);
+function ownHot(i: number): boolean {
+  const c = duel.sides.player.field[i], d = selDef();
+  if (d) {
+    if (d.type === "creature") return needsTribute(d) ? !!c : !c;
+    return d.effect?.kind === "heal_creature" && !!c;
+  }
+  return false;
+}
+function foeHot(i: number): boolean {
+  const c = duel.sides.enemy.field[i], d = selDef();
+  if (d && d.type === "action") return (d.effect?.kind === "damage_creature" || d.effect?.kind === "bounce") && !!c;
+  return atk !== null && !!c;
+}
+function zoneHtml(c: Creature | null, side: "player" | "enemy", i: number): string {
+  const hot = side === "player" ? ownHot(i) : foeHot(i);
+  const ready = side === "player" && c && !c.sick && !c.attacked && duel.active === "player";
   const inner = c
-    ? `<div class="card el-${c.element} ${c.sick ? "sick" : ""} ${c.shieldUp ? "shield" : ""}"><div class="nm">${c.name}</div><div class="art">${monsterSvg(c.cardId, c.element)}</div><div class="kw">${c.keywords.join(" · ")}</div><div class="st"><span>⚔${c.atk}</span><span>♥${c.hp}</span></div></div>`
+    ? `<div class="card el-${c.element} ${c.sick ? "sick" : ""} ${c.shieldUp ? "shield" : ""} ${ready ? "ready" : ""} ${atk === i && side === "player" ? "sel" : ""} ${c.burning ? "burn" : ""}"><div class="nm">${c.name}</div><div class="art">${monsterSvg(c.cardId, c.element)}</div><div class="kw">${c.keywords.join(" · ")}</div><div class="st"><span>⚔${c.atk}</span><span>♥${c.hp}</span></div></div>`
     : "";
   return `<div class="lane ${hot ? "hot" : ""}" data-side="${side}" data-lane="${i}">${inner}</div>`;
 }
-function selDef(): CardDef | null { return sel === null ? null : cardOf(duel.sides.player.hand[sel]); }
-function needLane(i: number) {
-  const d = selDef(); if (!d) return false;
-  if (d.type === "creature") return !duel.sides.player.lanes[i];
-  if (d.effect?.kind === "heal_creature") return !!duel.sides.player.lanes[i];
-  if (d.effect?.kind === "swap_lanes") return swapFirst === null ? !!duel.sides.player.lanes[i] : i !== swapFirst;
-  return false;
-}
-function needEnemy(i: number) {
-  const d = selDef(); return !!d && d.effect?.kind === "damage_creature" && !!duel.sides.enemy.lanes[i];
-}
 
 function render() {
-  if (result === "captured") { if (!revealing) { revealing = true; playReveal(el$, enc.name, monsterSvg(enc.monster!, enc.element, enc.rarity, 120), enc.rarity as Rarity, () => { revealing = false; result = "won"; resultCaptured = true; render(); }); } return; }
   const p = duel.sides.player, e = duel.sides.enemy;
   const myTurn = duel.active === "player" && !duel.winner && !busy;
+  const direct = atk !== null && foeEmpty();
   el$.innerHTML = `
-    ${ashlandsScene(save.hour, `<div class="plate"><div>${enc.name}${tutorial ? " · tutorial" : ""} <span class="hp" style="float:right;margin-left:12px">${Math.max(0, e.hp)}/${enc.hp}</span></div><div class="hpb"><b style="width:${Math.max(0, e.hp) / enc.hp * 100}%;${e.hp / enc.hp < 0.35 ? "background:#ff6a5a" : ""}"></b></div></div><div class="foe">${enc.monster ? monsterSvg(enc.monster, enc.element, enc.rarity, 110) : rivalSvg(110)}</div>`, "battle")}
+    ${ashlandsScene(save.hour, `<div class="plate"><div>${enc.name}${tutorial ? " · tutorial" : ""} <span class="hp" style="float:right;margin-left:12px">${Math.max(0, e.hp)}/${enc.hp}</span></div><div class="hpb"><b style="width:${Math.max(0, e.hp) / enc.hp * 100}%;${e.hp / enc.hp < 0.35 ? "background:#ff6a5a" : ""}"></b></div></div><div class="foe ${direct ? "hotfoe" : ""}" id="foe">${enc.monster ? monsterSvg(enc.monster, enc.element, enc.rarity, 110) : rivalSvg(110)}</div>${direct ? '<div class="tip">Tap to strike directly</div>' : ""}`, "battle")}
     <div class="board">
-      <div class="row">${e.lanes.map((c, i) => laneHtml(c, "enemy", i)).join("")}</div>
+      <div class="row">${e.field.map((c, i) => zoneHtml(c, "enemy", i)).join("")}</div>
       <div class="div"></div>
-      <div class="row">${p.lanes.map((c, i) => laneHtml(c, "player", i)).join("")}</div>
+      <div class="row">${p.field.map((c, i) => zoneHtml(c, "player", i)).join("")}</div>
     </div>
     <div class="log">${msg || duel.log[duel.log.length - 1] || ""}</div>
-    <div class="bar"><span class="hp">♥ ${Math.max(0, p.hp)}/20</span><span class="en">⚡ ${p.energy}/${p.maxEnergy}</span><span>Deck ${p.deck.length}</span></div>
+    <div class="bar"><span class="hp">♥ ${Math.max(0, p.hp)}/20</span><span class="en">${p.summoned ? "Summon ✔" : "Summon ○"} · ${p.spelled ? "Spell ✔" : "Spell ○"}</span><span>Deck ${p.deck.length}</span></div>
     <div class="hand">${p.hand.map((id, i) => {
       const d = cardOf(id);
+      const blocked = !myTurn || (d.type === "creature" ? p.summoned : p.spelled);
       const stat = d.type === "creature" ? `<span>⚔${d.atk}</span><span>♥${d.hp}</span>` : `<span>${d.name}</span>`;
-      return `<div class="card el-${d.element} ${sel === i ? "sel" : ""} ${d.cost > p.energy || !myTurn ? "no" : ""}" data-hand="${i}"><span class="cost">${d.cost}</span><div class="nm">${d.type === "creature" ? d.name : ICON[d.element] + " Spell"}</div>${d.type === "creature" ? `<div class="art">${monsterSvg(d.id, d.element)}</div>` : ""}<div class="kw">${(d.keywords || []).join(" · ") || (d.type === "action" ? d.effect?.kind.replace("_", " ") : "")}</div><div class="st">${stat}</div></div>`;
+      const sub = d.type === "creature" ? ((d.keywords || []).join(" · ") || "") + (needsTribute(d) ? " 🔻tribute" : "") : (d.effect?.kind === "bounce" ? "return to hand" : d.effect?.kind.replace("_", " "));
+      return `<div class="card el-${d.element} ${sel === i ? "sel" : ""} ${blocked ? "no" : ""}" data-hand="${i}">${d.type === "creature" ? `<span class="cost">${d.cost}</span>` : ""}<div class="nm">${d.type === "creature" ? d.name : ICON[d.element] + " Spell"}</div>${d.type === "creature" ? `<div class="art">${monsterSvg(d.id, d.element)}</div>` : ""}<div class="kw">${sub}</div><div class="st">${stat}</div></div>`;
     }).join("")}</div>
-    <div class="btns"><button class="alt" id="bag" ${myTurn && !tutorial ? "" : "disabled"}>🎒 Items</button><button id="end" ${myTurn ? "" : "disabled"}>End turn</button></div>
+    <div class="btns"><button class="alt" id="bag" ${myTurn && !tutorial && !duel.itemUsed ? "" : "disabled"}>🎒 Items</button><button id="end" ${myTurn ? "" : "disabled"}>End turn</button></div>
     ${showBag ? bagHtml() : ""}${result ? resultHtml() : ""}`;
   wire();
 }
 
 function bagHtml() {
-  const p = duel.sides.player;
-  const can = !duel.itemUsed && p.energy >= 1;
+  const can = !duel.itemUsed;
   const rows = seals.filter((s) => (bag[s.id] || 0) > 0).map((s) => {
     const pc = Math.round(chanceFor(s) * 100);
     return `<button class="item" data-seal="${s.id}" ${can ? "" : "disabled"}><span>${s.name} ×${bag[s.id]}<small>${s.element ? ICON[s.element] + " " + s.element : "any element"}${s.window ? " · " + s.window.start + "–" + s.window.end + "h" : ""}</small></span><span class="pct">${pc}%</span></button>`;
   }).join("");
-  return `<div class="over"><h2>Items</h2><div class="sub">${can ? "Throw a seal (1 energy, once per turn)" : duel.itemUsed ? "Already used an item this turn" : "Need 1 energy"}</div><div class="items">${rows}</div><div class="btns"><button class="alt" id="closebag">Back</button></div></div>`;
+  return `<div class="over"><h2>Items</h2><div class="sub">${can ? "Throw a seal (one item per turn)" : "Already used an item this turn"}</div><div class="items">${rows}</div><div class="btns"><button class="alt" id="closebag">Back</button></div></div>`;
 }
 function resultHtml() {
-  const rew = tutorial ? "" : result === "captured" ? "+40 credits" : result === "won" ? "+25 credits" : "";
+  const rew = tutorial ? "" : resultCaptured ? "+40 credits" : result === "won" ? "+25 credits" : "";
   const t = resultCaptured ? `<div class="big spark">✨ ${enc.name} captured! ✨</div><div class="sub">Card added to your collection · ${rew}</div>`
     : result === "won" ? `<div class="big spark">Victory</div><div class="sub">${tutorial ? "You beat Kade!" : enc.name + " fled · " + rew}</div>`
     : `<div class="big">Defeated</div><div class="sub">${tutorial ? "Try again" : "You retreat to the portal"}</div>`;
@@ -116,7 +125,6 @@ function afterDuel() {
   if (resultCaptured && save.stage === "tutorial_done") { save.stage = "pact"; store(save); return story(PACT, map); }
   map();
 }
-
 function finishCheck() {
   if (duel.winner === "captured") result = "captured";
   else if (duel.winner === "player") result = "won";
@@ -131,34 +139,40 @@ function finishCheck() {
     store(save);
   }
 }
-function guard(fn: () => void) { try { fn(); } catch (err) { msg = (err as Error).message; shakeKey++; } sel = sel !== null && duel.sides.player.hand[sel] ? sel : null; render(); }
+function guard(fn: () => void) { try { fn(); } catch (err) { msg = (err as Error).message; } finishCheck(); render(); }
 
 async function endTurn() {
-  busy = true; sel = null; swapFirst = null;
+  busy = true; sel = null; atk = null;
   duel = apply(data, duel, { kind: "end_turn" }); finishCheck(); render();
   if (duel.winner) { busy = false; return render(); }
   msg = enc.name + " is moving…"; render();
-  await new Promise((r) => setTimeout(r, 700));
+  await new Promise((r) => setTimeout(r, 800));
   duel = aiTurn(data, duel); msg = ""; busy = false; finishCheck(); render();
 }
 
 function wire() {
   el$.querySelectorAll<HTMLElement>("[data-hand]").forEach((n) => n.onclick = () => {
     if (duel.active !== "player" || busy) return;
-    const i = +n.dataset.hand!; sel = sel === i ? null : i; swapFirst = null; msg = ""; render();
+    const i = +n.dataset.hand!; sel = sel === i ? null : i; atk = null; msg = ""; render();
   });
   el$.querySelectorAll<HTMLElement>(".lane").forEach((n) => n.onclick = () => {
-    const d = selDef(); if (!d || sel === null) return;
-    const lane = +n.dataset.lane!, side = n.dataset.side;
+    if (duel.active !== "player" || busy || duel.winner) return;
+    const slot = +n.dataset.lane!, side = n.dataset.side;
+    const d = selDef();
     guard(() => {
-      if (d.type === "creature" && side === "player") { duel = apply(data, duel, { kind: "play_creature", handIndex: sel!, lane }); sel = null; }
-      else if (d.effect?.kind === "damage_creature" && side === "enemy") { duel = apply(data, duel, { kind: "play_action", handIndex: sel!, targetLane: lane }); sel = null; }
-      else if (d.effect?.kind === "heal_creature" && side === "player") { duel = apply(data, duel, { kind: "play_action", handIndex: sel!, targetLane: lane }); sel = null; }
-      else if (d.effect?.kind === "swap_lanes" && side === "player") {
-        if (swapFirst === null) { swapFirst = lane; } else { duel = apply(data, duel, { kind: "play_action", handIndex: sel!, swap: [swapFirst, lane] }); sel = null; swapFirst = null; }
+      if (d && sel !== null) {
+        if (d.type === "creature" && side === "player") {
+          duel = apply(data, duel, needsTribute(d) ? { kind: "summon", handIndex: sel, slot, tribute: slot } : { kind: "summon", handIndex: sel, slot }); sel = null;
+        } else if (d.type === "action" && side === "enemy" && d.effect?.kind !== "heal_creature") { duel = apply(data, duel, { kind: "spell", handIndex: sel, target: slot }); sel = null; }
+        else if (d.type === "action" && side === "player" && d.effect?.kind === "heal_creature") { duel = apply(data, duel, { kind: "spell", handIndex: sel, target: slot }); sel = null; }
+        return;
       }
-      finishCheck();
+      if (side === "player") { const c = duel.sides.player.field[slot]; atk = c && !c.sick && !c.attacked ? (atk === slot ? null : slot) : null; if (c && (c.sick || c.attacked)) msg = c.attacked ? "Already attacked" : "Just arrived"; return; }
+      if (atk !== null) { duel = apply(data, duel, { kind: "attack", from: atk, target: slot }); atk = null; }
     });
+  });
+  document.getElementById("foe")?.addEventListener("click", () => {
+    if (atk !== null && foeEmpty() && duel.active === "player" && !busy) guard(() => { duel = apply(data, duel, { kind: "attack", from: atk!, target: "direct" }); atk = null; });
   });
   document.getElementById("end")?.addEventListener("click", endTurn);
   document.getElementById("bag")?.addEventListener("click", () => { showBag = true; render(); });
@@ -166,8 +180,7 @@ function wire() {
   document.getElementById("again")?.addEventListener("click", afterDuel);
   el$.querySelectorAll<HTMLElement>("[data-seal]").forEach((n) => n.onclick = () => {
     const s = seals.find((x) => x.id === n.dataset.seal)!;
-    const chance = chanceFor(s);
-    const r = throwSeal(duel, chance);
+    const r = throwSeal(duel, chanceFor(s));
     bag[s.id]--; store(save); duel = r.state; showBag = false;
     msg = r.success ? "" : "The seal broke! Failed throws: " + duel.failedThrows;
     finishCheck(); render();
