@@ -4,6 +4,7 @@ import sealsJson from "../data/seals.json";
 import captureJson from "../data/capture.json";
 import encJson from "../data/encounters.json";
 import { newDuel, apply, throwSeal, aiTurn, type GameData, type DuelState, type CardDef, type Creature } from "./engine/battle.ts";
+import { bonusMap, copiesToRank, MAX_RANK } from "./ranks.ts";
 import { load, store, type Save } from "./save.ts";
 import { renderDeck } from "./ui/deck.ts";
 import { monsterSvg, rivalSvg, ashlandsScene } from "./ui/art.ts";
@@ -41,7 +42,7 @@ let resultCaptured = false;
 
 function startDuel(e: Enc, isTutorial = false) {
   enc = e; tutorial = isTutorial; settled = false;
-  duel = newDuel(data, isTutorial ? cardsJson.starterDeck : save.deck, e.deck, { enemyHp: e.hp, seed: (Date.now() & 0xffff) || 1 });
+  duel = newDuel(data, isTutorial ? cardsJson.starterDeck : save.deck, e.deck, { enemyHp: e.hp, seed: (Date.now() & 0xffff) || 1, bonus: isTutorial ? {} : bonusMap(save.ranks) });
   sel = null; swapFirst = null; showBag = false; busy = false; atk = null; msg = isTutorial ? "Summon a monster, tap it to attack, then End turn." : ""; result = null; revealing = false; resultCaptured = false;
   render();
 }
@@ -238,10 +239,19 @@ function outpost() {
 }
 
 const SELL = 20;
+const rankOf = (id: string) => save.ranks[id] || 1;
 function exchange() {
-  const extras = data.cards.map((c) => ({ c, n: (save.collection[c.id] || 0) - (c.type === "creature" ? 1 : 2) })).filter((x) => x.n > 0);
-  el$.innerHTML = `<div class="bar"><span>♻ Exchange</span><span>◈ ${save.credits}</span></div><div class="sub" style="text-align:center">Sell spare copies. Rank-ups come later.</div><div class="items">${extras.length ? extras.map(({ c, n }) => `<button class="item" data-sell="${c.id}"><span>${ICON[c.element]} ${c.name} <small>${n} spare</small></span><span class="pct">Sell ◈ ${SELL}</span></button>`).join("") : '<div class="sub" style="text-align:center">No spare copies yet. Capture duplicates in the Ashlands.</div>'}</div><div class="btns"><button class="alt" id="back">Back</button></div>`;
+  const rows = data.cards.map((c) => ({ c, spare: (save.collection[c.id] || 0) - (c.type === "creature" ? 1 : 2) })).filter((x) => x.spare > 0 || (x.c.type === "creature" && save.collection[x.c.id]));
+  const html = rows.map(({ c, spare }) => {
+    const r = rankOf(c.id), need = copiesToRank(r), creature = c.type === "creature";
+    const can = creature && r < MAX_RANK && spare >= need;
+    const rankBtn = creature ? (r >= MAX_RANK ? `<small>MAX rank</small>` : `<button class="alt mini2" data-rank="${c.id}" ${can ? "" : "disabled"}>Rank up (${need} spare)</button>`) : "";
+    const sell = spare > 0 ? `<button class="alt mini2" data-sell="${c.id}">Sell ◈ ${SELL}</button>` : "";
+    return `<div class="item"><span>${ICON[c.element]} ${c.name} ${creature ? "★".repeat(r) : ""}<small>${spare > 0 ? spare + " spare" : "no spares"}${creature ? " · rank " + r + "/" + MAX_RANK : ""}</small></span><span style="display:flex;gap:6px">${rankBtn}${sell}</span></div>`;
+  }).join("");
+  el$.innerHTML = `<div class="bar"><span>♻ Exchange</span><span>◈ ${save.credits}</span></div><div class="sub" style="text-align:center">Feed spare copies into a monster to rank it up, or sell them.</div><div class="items">${html || '<div class="sub" style="text-align:center">Nothing here yet. Capture duplicates in the Ashlands.</div>'}</div><div class="btns"><button class="alt" id="back">Back</button></div>`;
   el$.querySelectorAll<HTMLElement>("[data-sell]").forEach((n) => n.onclick = () => { save.collection[n.dataset.sell!]--; save.credits += SELL; store(save); exchange(); });
+  el$.querySelectorAll<HTMLElement>("[data-rank]").forEach((n) => n.onclick = () => { const id = n.dataset.rank!, r = rankOf(id); save.collection[id] -= copiesToRank(r); save.ranks[id] = r + 1; store(save); exchange(); });
   document.getElementById("back")!.onclick = map;
 }
 

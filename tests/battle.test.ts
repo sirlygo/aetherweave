@@ -142,6 +142,17 @@ throws("defenders block direct attacks", () => { let d = fresh(); d = spawn(data
   throws("one item per turn", () => throwSeal(miss.state, 1));
 }
 
+// rank bonuses apply to the player's monsters only
+{
+  let d = newDuel(data, starter, wolf.deck, { seed: 5, bonus: { cinderpup: { atk: 1, hp: 2 } } });
+  d.sides.player.field = [null, null, null]; d.sides.enemy.field = [null, null, null];
+  d.sides.player.hand = ["cinderpup"]; d.sides.enemy.hand = ["cinderpup"];
+  d = apply(data, d, { kind: "summon", handIndex: 0, slot: 0 });
+  ok("rank bonus boosts the player's monster (2/1 becomes 3/3)", d.sides.player.field[0]?.atk === 3 && d.sides.player.field[0]?.hp === 3);
+  d = spawn(data, d, "enemy", 0, "cinderpup");
+  ok("enemy copy of the same card is unaffected", d.sides.enemy.field[0]?.atk === 2 && d.sides.enemy.field[0]?.hp === 1);
+}
+
 // AI vs AI always finishes, against every encounter
 for (const e of encs) {
   let fin = 0, pw = 0; const N = 150;

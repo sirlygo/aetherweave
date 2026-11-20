@@ -66,3 +66,4 @@ button.mini{flex:none;padding:6px 12px;font-size:18px;border-radius:8px}
 .hand .card .art svg{width:40px;height:40px}.lane .card .art svg{width:52px;height:52px}
 .card.ready{box-shadow:0 0 0 2px #ffd86b,0 0 10px #ffd86b88}.card.burn::before{content:"🔥";position:absolute;left:2px;top:2px;font-size:12px}
 .foe.hotfoe{cursor:pointer;filter:drop-shadow(0 0 10px #ffd86b)}.tip{position:absolute;right:8px;top:8px;background:#000b;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;color:#ffd86b}
+.mini2{flex:none;padding:6px 10px;font-size:12px;border-radius:8px}

@@ -13,7 +13,7 @@ export function renderDeck(host: HTMLElement, cards: CardDef[], save: Save, onBa
     <div class="items">${owned.map((c) => {
       const n = count(c.id), lim = deckLimit(c, save.collection[c.id]);
       const stat = c.type === "creature" ? `⚔${c.atk} ♥${c.hp} · ${(c.keywords || []).join(", ") || "no keyword"}` : `Spell · ${c.effect?.kind.replace("_", " ")}`;
-      return `<div class="item ${n ? "sel" : ""}"><span>${ICON[c.element]} ${c.name} <small>${c.cost} energy · ${stat} · owned ×${save.collection[c.id]}</small></span><span style="display:flex;gap:6px;align-items:center"><button class="alt mini" data-dec="${c.id}" ${n ? "" : "disabled"}>−</button><b>${n}/${lim}</b><button class="alt mini" data-inc="${c.id}" ${n >= lim || save.deck.length >= MAX_DECK ? "disabled" : ""}>+</button></span></div>`;
+      return `<div class="item ${n ? "sel" : ""}"><span>${ICON[c.element]} ${c.name}${(save.ranks[c.id] || 1) > 1 ? " " + "★".repeat(save.ranks[c.id]) : ""} <small>${c.cost} energy · ${stat} · owned ×${save.collection[c.id]}</small></span><span style="display:flex;gap:6px;align-items:center"><button class="alt mini" data-dec="${c.id}" ${n ? "" : "disabled"}>−</button><b>${n}/${lim}</b><button class="alt mini" data-inc="${c.id}" ${n >= lim || save.deck.length >= MAX_DECK ? "disabled" : ""}>+</button></span></div>`;
     }).join("")}</div>
     <div class="btns"><button id="back" ${ok ? "" : "disabled"}>${ok ? "Done" : "Deck needs " + MIN_DECK + "+ cards"}</button></div>`;
   host.querySelectorAll<HTMLElement>("[data-inc]").forEach((b) => b.onclick = () => { save.deck.push(b.dataset.inc!); onChange(); renderDeck(host, cards, save, onBack, onChange); });

@@ -23,6 +23,7 @@ export interface SideState {
 export interface DuelState {
   turn: number; active: Side; sides: Record<Side, SideState>; rng: number; nextUid: number;
   winner: Side | "captured" | null; itemUsed: boolean; failedThrows: number; log: string[];
+  bonus: Record<string, { atk: number; hp: number }>; // player rank bonuses by card id
 }
 export type Action =
   | { kind: "summon"; handIndex: number; slot: number; tribute?: number }
@@ -54,10 +55,10 @@ function shuffle(s: DuelState, arr: string[]): string[] {
 }
 const blank = (hp: number): SideState => ({ hp, deck: [], hand: [], discard: [], field: [null, null, null], summoned: false, spelled: false, turnsTaken: 0 });
 
-export function newDuel(data: GameData, playerDeck: string[], enemyDeck: string[], opts: { enemyHp?: number; playerHp?: number; seed?: number } = {}): DuelState {
+export function newDuel(data: GameData, playerDeck: string[], enemyDeck: string[], opts: { enemyHp?: number; playerHp?: number; seed?: number; bonus?: Record<string, { atk: number; hp: number }> } = {}): DuelState {
   const s: DuelState = {
     turn: 1, active: "player", sides: { player: blank(opts.playerHp ?? 20), enemy: blank(opts.enemyHp ?? 20) },
-    rng: opts.seed ?? 1, nextUid: 1, winner: null, itemUsed: false, failedThrows: 0, log: [],
+    rng: opts.seed ?? 1, nextUid: 1, winner: null, itemUsed: false, failedThrows: 0, log: [], bonus: opts.bonus ?? {},
   };
   s.sides.player.deck = shuffle(s, playerDeck);
   s.sides.enemy.deck = shuffle(s, enemyDeck);
@@ -125,15 +126,16 @@ function processDeaths(s: DuelState): void {
   }
 }
 
-function make(s: DuelState, def: CardDef, ready: boolean): Creature {
+function make(s: DuelState, def: CardDef, ready: boolean, side: Side): Creature {
   const kw = def.keywords ?? [];
-  return { uid: s.nextUid++, cardId: def.id, name: def.name, element: def.element, atk: def.atk ?? 0, hp: def.hp ?? 1, maxHp: def.hp ?? 1, keywords: [...kw], shieldUp: kw.includes("shield"), sick: ready ? false : !kw.includes("swift"), attacked: false, burning: false };
+  const b = side === "player" ? s.bonus[def.id] : undefined;
+  return { uid: s.nextUid++, cardId: def.id, name: def.name, element: def.element, atk: (def.atk ?? 0) + (b?.atk ?? 0), hp: (def.hp ?? 1) + (b?.hp ?? 0), maxHp: (def.hp ?? 1) + (b?.hp ?? 0), keywords: [...kw], shieldUp: kw.includes("shield"), sick: ready ? false : !kw.includes("swift"), attacked: false, burning: false };
 }
 
 // Test and setup helper.
 export function spawn(data: GameData, state: DuelState, side: Side, slot: number, cardId: string): DuelState {
   const s = structuredClone(state);
-  s.sides[side].field[slot] = make(s, byId(data, cardId), true);
+  s.sides[side].field[slot] = make(s, byId(data, cardId), true, side);
   return s;
 }
 
@@ -157,7 +159,7 @@ export function apply(data: GameData, state: DuelState, action: Action): DuelSta
     }
     if (sd.field[action.slot]) throw new Error("Zone is occupied");
     sd.hand.splice(action.handIndex, 1);
-    sd.field[action.slot] = make(s, def, false);
+    sd.field[action.slot] = make(s, def, false, me);
     sd.summoned = true;
     s.log.push(me + " summons " + def.name);
     return s;
